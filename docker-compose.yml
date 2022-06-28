@@ -1,0 +1,69 @@
+version: "3.7"
+
+services:
+  order-api:
+    container_name: order-api
+    build:
+      context: ./order-api
+      target: development
+    restart: always
+    command: yarn start:dev
+    ports:
+      - 3000:3000
+      - 3500:3500 # Dapr port
+    volumes:
+      - ./order-api:/usr/src/app
+    networks:
+      - network
+
+  order-api-dapr:
+    image: daprio/daprd:edge
+    container_name: order-api-dapr
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "order-api",
+        "-app-port",
+        "3000",
+        "-dapr-http-port",
+        "3500",
+      ]
+    depends_on:
+      - order-api
+    network_mode: service:order-api
+
+  product-api:
+    container_name: product-api
+    build:
+      context: ./product-api
+      target: development
+    restart: always
+    command: yarn start:dev
+    ports:
+      - 4000:4000
+      - 3501:3501 # Dapr port
+    volumes:
+      - ./product-api:/usr/src/app
+    networks:
+      - network
+
+  product-api-dapr:
+    image: daprio/daprd:edge
+    container_name: product-api-dapr
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "product-api",
+        "-app-port",
+        "4000",
+        "-dapr-http-port",
+        "3501",
+      ]
+    depends_on:
+      - product-api
+    network_mode: service:product-api
+
+networks:
+  network:
